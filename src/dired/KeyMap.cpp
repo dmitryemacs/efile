@@ -165,6 +165,7 @@ bool KeyMap::eventFilter(QObject* obj, QEvent* event) {
         return true;
     }
 
+    const bool wasPending = !pending_.isEmpty();
     pending_.append(key);
 
     Node* node = &root_;
@@ -174,6 +175,8 @@ bool KeyMap::eventFilter(QObject* obj, QEvent* event) {
             const QString full = pending_.join(QLatin1Char(' '));
             pending_.clear();
             emit prefixChanged(QString());
+            if (passThroughUndefined_ && !wasPending)
+                return false; // let the widget handle it (e.g. insert text)
             emit undefinedKey(full);
             return true;
         }
@@ -196,6 +199,8 @@ bool KeyMap::eventFilter(QObject* obj, QEvent* event) {
     const QString full = pending_.join(QLatin1Char(' '));
     pending_.clear();
     emit prefixChanged(QString());
+    if (passThroughUndefined_ && !wasPending)
+        return false;
     emit undefinedKey(full);
     return true;
 }

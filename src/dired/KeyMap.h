@@ -19,6 +19,9 @@ public:
     void bind(const QString& sequence, const QString& command);
     void reset();
 
+    // When true, an unbound single key is passed to the widget (for text input).
+    void setPassThroughUndefined(bool on) { passThroughUndefined_ = on; }
+
 signals:
     void commandTriggered(const QString& command);
     void prefixChanged(const QString& keys); // empty when no prefix is pending
@@ -38,4 +41,5 @@ private:
 
     Node root_;
     QStringList pending_;
+    bool passThroughUndefined_ = false;
 };
