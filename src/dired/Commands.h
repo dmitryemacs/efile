@@ -27,6 +27,14 @@ public:
     // Load "dir" into the listing, refreshing the buffer and window title.
     bool loadDirectory(const QString& dir);
 
+    // Re-read the current directory (used after the embedded editor closes).
+    void refresh();
+
+    // Called to open a file in the embedded editor.
+    void setEditFileCallback(std::function<void(const QString&)> callback) {
+        editFile_ = std::move(callback);
+    }
+
 private:
     void bind(const QString& name, std::function<void()> fn);
 
@@ -38,8 +46,6 @@ private:
     QString statusLine() const;
     void updateEcho();
 
-    void openInEditor(const QString& path);
-    QString editorCommand() const;
     static QString expandUser(const QString& path);
 
     void doFindFile();
@@ -63,5 +69,6 @@ private:
     DiredBuffer* buffer_;
     Minibuffer* minibuffer_;
     QWidget* window_;
+    std::function<void(const QString&)> editFile_;
     QHash<QString, std::function<void()>> table_;
 };

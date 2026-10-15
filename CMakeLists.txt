@@ -28,6 +28,10 @@ qt_add_executable(file_manager WIN32
     src/dired/KeyMap.cpp
     src/dired/Commands.h
     src/dired/Commands.cpp
+    src/editor/EditorBuffer.h
+    src/editor/EditorBuffer.cpp
+    src/editor/EditorCommands.h
+    src/editor/EditorCommands.cpp
     src/ui/Minibuffer.h
     src/ui/Minibuffer.cpp
     src/ui/Theme.h

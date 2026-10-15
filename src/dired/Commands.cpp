@@ -9,8 +9,6 @@
 #include <QDir>
 #include <QFileInfo>
 #include <QMessageBox>
-#include <QProcess>
-#include <QSettings>
 #include <QTextCursor>
 #include <QWidget>
 
@@ -91,6 +89,8 @@ bool Commands::loadDirectory(const QString& dir) {
     return true;
 }
 
+void Commands::refresh() { reload(true); }
+
 void Commands::reload(bool keepPosition) {
     const QString name = currentName();
     const QString dir = model_->currentDir();
@@ -100,6 +100,8 @@ void Commands::reload(bool keepPosition) {
         return;
     }
     buffer_->refreshText(false);
+    window_->setWindowTitle(QStringLiteral("dired: ") +
+                            QDir::toNativeSeparators(model_->currentDir()));
     if (keepPosition) {
         const int idx = model_->indexOfName(name);
         if (idx >= 0)
@@ -156,46 +158,6 @@ QString Commands::expandUser(const QString& path) {
     return path;
 }
 
-QString Commands::editorCommand() const {
-    QString e = qEnvironmentVariable("EDITOR");
-    if (e.isEmpty())
-        e = qEnvironmentVariable("VISUAL");
-    if (e.isEmpty()) {
-        QSettings settings;
-        e = settings.value(QStringLiteral("editor/command")).toString();
-    }
-    if (e.isEmpty())
-        e = QStringLiteral("notepad.exe");
-    return e;
-}
-
-void Commands::openInEditor(const QString& path) {
-    const QStringList argv = FsOps::splitCommand(editorCommand());
-    if (argv.isEmpty()) {
-        minibuffer_->message(QStringLiteral("No editor configured"));
-        return;
-    }
-
-    QString program = argv.first();
-    QStringList args = argv.mid(1);
-    bool hasPlaceholder = false;
-    for (QString& a : args) {
-        if (a.contains(QStringLiteral("%f"))) {
-            a.replace(QStringLiteral("%f"), path);
-            hasPlaceholder = true;
-        }
-    }
-    if (!hasPlaceholder)
-        args.append(path);
-
-    qint64 pid = 0;
-    if (QProcess::startDetached(program, args, QFileInfo(path).absolutePath(), &pid))
-        minibuffer_->message(QStringLiteral("Opening %1 in %2")
-                                 .arg(QFileInfo(path).fileName(), program));
-    else
-        minibuffer_->message(QStringLiteral("Failed to launch editor: ") + program);
-}
-
 void Commands::doFindFile() {
     const DirEntry* e = currentEntry();
     if (!e) {
@@ -206,8 +168,10 @@ void Commands::doFindFile() {
     if (e->isDir) {
         const QString canonical = QFileInfo(path).canonicalFilePath();
         loadDirectory(canonical.isEmpty() ? QDir::cleanPath(path) : canonical);
+    } else if (editFile_) {
+        editFile_(path);
     } else {
-        openInEditor(path);
+        minibuffer_->message(QStringLiteral("No editor available"));
     }
 }
 
@@ -500,7 +464,7 @@ Navigation
   C-l                recenter
 
 Files
-  RET / f            open file (external editor) or enter directory
+  RET / f            open file in embedded editor, or enter directory
   ^                  go to parent directory
   C-x C-f            find directory (prompt)
 
@@ -521,6 +485,6 @@ Other
   ?                  this help            q / C-x C-c      quit
   C-g                cancel
 
-Editor: set the EDITOR environment variable or the QSettings key editor/command.)";
+Files open in the built-in Emacs editor (see the editor section of README).)";
     QMessageBox::information(window_, QStringLiteral("Dired keys"), QString::fromLatin1(help));
 }
