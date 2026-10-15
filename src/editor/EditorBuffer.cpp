@@ -1,11 +1,14 @@
 #include "editor/EditorBuffer.h"
 
+#include "ui/BlockCursor.h"
+
 #include <QApplication>
 #include <QClipboard>
 #include <QFile>
 #include <QFileInfo>
 #include <QFont>
 #include <QFontMetrics>
+#include <QPainter>
 #include <QSaveFile>
 #include <QTextBlock>
 #include <QTextDocument>
@@ -23,13 +26,14 @@ EditorBuffer::EditorBuffer(QWidget* parent) : QPlainTextEdit(parent) {
     setLineWrapMode(QPlainTextEdit::NoWrap);
     setUndoRedoEnabled(true);
     setTabChangesFocus(false);
-    setCursorWidth(2);
 
     QFont f(QStringLiteral("Consolas"));
     f.setStyleHint(QFont::Monospace);
     f.setFixedPitch(true);
     f.setPointSize(10);
     setFont(f);
+
+    cursor_ = new BlockCursor(this);
 
     // Any edit deactivates the mark (transient mark behaviour).
     connect(document(), &QTextDocument::contentsChanged, this,
@@ -174,4 +178,12 @@ void EditorBuffer::yank() {
 int EditorBuffer::visibleLineCount() const {
     const int lineHeight = qMax(1, fontMetrics().lineSpacing());
     return qMax(1, viewport()->height() / lineHeight);
+}
+
+void EditorBuffer::paintEvent(QPaintEvent* event) {
+    QPlainTextEdit::paintEvent(event);
+
+    // Emacs-style blinking block cursor on top of the text.
+    QPainter painter(viewport());
+    cursor_->paint(painter);
 }

@@ -34,6 +34,8 @@ qt_add_executable(file_manager WIN32
     src/editor/EditorCommands.cpp
     src/ui/Minibuffer.h
     src/ui/Minibuffer.cpp
+    src/ui/BlockCursor.h
+    src/ui/BlockCursor.cpp
     src/ui/Theme.h
     src/ui/Theme.cpp
     src/util/FsOps.h

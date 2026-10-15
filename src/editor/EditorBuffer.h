@@ -3,6 +3,8 @@
 #include <QPlainTextEdit>
 #include <QTextCursor>
 
+class BlockCursor;
+
 // Editable text buffer used by the embedded Emacs-like editor.
 class EditorBuffer : public QPlainTextEdit {
     Q_OBJECT
@@ -35,7 +37,11 @@ public:
 
     int visibleLineCount() const;
 
+protected:
+    void paintEvent(QPaintEvent* event) override;
+
 private:
     QString filePath_;
     bool markActive_ = false;
+    BlockCursor* cursor_ = nullptr;
 };

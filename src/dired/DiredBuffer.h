@@ -6,6 +6,7 @@ namespace dired {
 class DirModel;
 }
 class DiredHighlighter;
+class BlockCursor;
 
 // Read-only text view that renders one directory entry per line ("dired buffer").
 class DiredBuffer : public QPlainTextEdit {
@@ -40,4 +41,5 @@ protected:
 private:
     dired::DirModel* model_ = nullptr;
     DiredHighlighter* highlighter_ = nullptr;
+    BlockCursor* cursor_ = nullptr;
 };

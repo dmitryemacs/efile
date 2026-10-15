@@ -2,6 +2,7 @@
 
 #include "dired/DiredHighlighter.h"
 #include "dired/DirModel.h"
+#include "ui/BlockCursor.h"
 
 #include <QColor>
 #include <QFont>
@@ -16,7 +17,6 @@ DiredBuffer::DiredBuffer(QWidget* parent) : QPlainTextEdit(parent) {
     setUndoRedoEnabled(false);
     setLineWrapMode(QPlainTextEdit::NoWrap);
     setContextMenuPolicy(Qt::NoContextMenu);
-    setCursorWidth(2);
     setAcceptDrops(false);
     setFocusPolicy(Qt::StrongFocus);
     setTextInteractionFlags(Qt::TextSelectableByMouse | Qt::TextSelectableByKeyboard);
@@ -29,7 +29,9 @@ DiredBuffer::DiredBuffer(QWidget* parent) : QPlainTextEdit(parent) {
 
     highlighter_ = new DiredHighlighter(document());
 
-    // Read-only text edits do not paint the caret, so we draw the point ourselves.
+    // Read-only text edits do not paint the caret, so we draw our own block cursor.
+    cursor_ = new BlockCursor(this);
+
     connect(this, &QPlainTextEdit::cursorPositionChanged, this,
             &DiredBuffer::updatePointHighlight);
     connect(this, &QPlainTextEdit::selectionChanged, this, &DiredBuffer::updatePointHighlight);
@@ -54,14 +56,9 @@ void DiredBuffer::updatePointHighlight() {
 void DiredBuffer::paintEvent(QPaintEvent* event) {
     QPlainTextEdit::paintEvent(event);
 
-    // Draw the caret on top: a read-only QPlainTextEdit would otherwise hide it.
-    if (!hasFocus())
-        return;
-    const QRect r = cursorRect();
-    if (!r.isValid())
-        return;
+    // Draw the point as a blinking block cursor on top of the listing.
     QPainter painter(viewport());
-    painter.fillRect(QRect(r.left(), r.top(), 2, r.height()), palette().color(QPalette::Text));
+    cursor_->paint(painter);
 }
 
 void DiredBuffer::setModel(dired::DirModel* model) {
